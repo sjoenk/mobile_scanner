@@ -27,8 +27,8 @@ class MobileScanner extends StatefulWidget {
   /// Set to false if you don't want duplicate scans.
   final bool allowDuplicates;
 
-  /// Set to false if you don't want duplicate scans.
   final Duration? clearHistoryAfter;
+  final Duration wait;
 
   /// Create a [MobileScanner] with a [controller], the [controller] must has been initialized.
   const MobileScanner({
@@ -38,6 +38,7 @@ class MobileScanner extends StatefulWidget {
     this.fit = BoxFit.cover,
     this.allowDuplicates = false,
     this.clearHistoryAfter,
+    this.wait = const Duration(seconds: 2),
   }) : super(key: key);
 
   @override
@@ -70,6 +71,7 @@ class _MobileScannerState extends State<MobileScanner>
   }
 
   String? lastScanned;
+  bool wait = false;
 
   @override
   Widget build(BuildContext context) {
@@ -83,12 +85,14 @@ class _MobileScannerState extends State<MobileScanner>
             } else {
               controller.barcodes.listen((barcode) {
                 if (!widget.allowDuplicates) {
-                  if (lastScanned != barcode.rawValue) {
+                  if (lastScanned != barcode.rawValue && !wait) {
+                    wait = true;
                     lastScanned = barcode.rawValue;
                     widget.onDetect!(barcode, value as MobileScannerArguments);
                     if (widget.clearHistoryAfter != null) {
                       Future.delayed(
                           widget.clearHistoryAfter!, () => lastScanned = '');
+                      Future.delayed(widget.wait, () => wait = false);
                     }
                   }
                 } else {
